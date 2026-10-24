@@ -1,15 +1,23 @@
 // Helpers for running PowerShell and plain processes from the main process.
 const { execFile } = require('child_process');
+const crypto = require('crypto');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 function runPS(script, { timeout = 120000 } = {}) {
   const full = "$ErrorActionPreference='SilentlyContinue';[Console]::OutputEncoding=[Text.Encoding]::UTF8;\n" + script;
-  const encoded = Buffer.from(full, 'utf16le').toString('base64');
+  // Run from a temp .ps1 file: scripts with embedded data easily exceed the 32K command-line limit.
+  // The BOM makes Windows PowerShell read it as UTF-8.
+  const file = path.join(os.tmpdir(), `goldkey-${process.pid}-${crypto.randomUUID()}.ps1`);
+  fs.writeFileSync(file, '﻿' + full, 'utf8');
   return new Promise((resolve, reject) => {
     execFile(
       'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', file],
       { timeout, maxBuffer: 64 * 1024 * 1024, windowsHide: true },
       (err, stdout, stderr) => {
+        fs.rm(file, { force: true }, () => {});
         if (err && !stdout) return reject(new Error(stderr || err.message));
         resolve(stdout.trim());
       }
