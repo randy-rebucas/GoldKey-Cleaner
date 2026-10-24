@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>PC Sweep</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="3"/>
+        <path d="M10 17l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>PC Sweep</span>
+    </div>
+    <nav>
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="junk">Junk Cleaner</button>
+      <button data-view="privacy">Privacy Cleaner</button>
+      <button data-view="registry">Registry Cleaner</button>
+      <button data-view="startup">Startup Manager</button>
+      <button data-view="programs">Uninstaller</button>
+      <button data-view="disk">Large Files</button>
+      <button data-view="system">System Info</button>
+    </nav>
+    <div class="admin-box" id="adminBox"></div>
+  </aside>
+
+  <main>
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view active">
+      <header><h1>PC Health</h1><p>Scan your computer for junk, privacy traces and registry issues.</p></header>
+      <div class="hero">
+        <div class="gauge">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" class="gauge-bg"/>
+            <circle cx="60" cy="60" r="52" class="gauge-fg" id="gaugeArc"/>
+          </svg>
+          <div class="gauge-label"><strong id="score">--</strong><span id="scoreText">Not scanned</span></div>
+        </div>
+        <div class="hero-actions">
+          <h2 id="heroTitle">Your PC hasn't been scanned yet</h2>
+          <p id="heroSub" class="muted">A full scan takes about a minute and changes nothing until you choose to fix.</p>
+          <div class="row">
+            <button class="btn primary big" id="scanAll">Scan Now</button>
+            <button class="btn success big hidden" id="fixAll">Fix All Issues</button>
+          </div>
+          <div class="progress hidden" id="dashProgress"><div class="bar"></div><span></span></div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card" data-goto="junk"><h3>Junk Files</h3><div class="metric" id="mJunk">—</div><p class="muted">Temp files, caches, Recycle Bin</p></div>
+        <div class="card" data-goto="privacy"><h3>Privacy Traces</h3><div class="metric" id="mPrivacy">—</div><p class="muted">History, recent documents, MRU</p></div>
+        <div class="card" data-goto="registry"><h3>Registry Issues</h3><div class="metric" id="mRegistry">—</div><p class="muted">Obsolete and broken entries</p></div>
+        <div class="card" data-goto="startup"><h3>Startup Programs</h3><div class="metric" id="mStartup">—</div><p class="muted">Apps launching with Windows</p></div>
+      </div>
+    </section>
+
+    <!-- Junk / Privacy share a layout -->
+    <section id="view-junk" class="view" data-group="junk">
+      <header><h1>Junk Cleaner</h1><p>Free up disk space by removing temporary and cached files.</p></header>
+      <div class="toolbar">
+        <button class="btn primary" data-act="scan">Scan</button>
+        <button class="btn success" data-act="clean" disabled>Clean Selected</button>
+        <span class="summary"></span>
+      </div>
+      <div class="progress hidden"><div class="bar"></div><span></span></div>
+      <div class="list"></div>
+    </section>
+
+    <section id="view-privacy" class="view" data-group="privacy">
+      <header><h1>Privacy Cleaner</h1><p>Erase browsing history and activity traces Windows keeps about you.</p></header>
+      <div class="toolbar">
+        <button class="btn primary" data-act="scan">Scan</button>
+        <button class="btn success" data-act="clean" disabled>Clean Selected</button>
+        <span class="summary"></span>
+      </div>
+      <div class="progress hidden"><div class="bar"></div><span></span></div>
+      <div class="list"></div>
+    </section>
+
+    <!-- Registry -->
+    <section id="view-registry" class="view">
+      <header><h1>Registry Cleaner</h1><p>Removes per-user registry entries pointing to programs that no longer exist. A backup is saved before every fix.</p></header>
+      <div class="toolbar">
+        <button class="btn primary" id="regScan">Scan</button>
+        <button class="btn success" id="regFix" disabled>Fix Selected</button>
+        <button class="btn ghost" id="regBackups">Backups…</button>
+        <span class="summary" id="regSummary"></span>
+      </div>
+      <div class="progress hidden" id="regProgress"><div class="bar indeterminate"></div><span>Scanning registry…</span></div>
+      <div class="table-wrap"><table id="regTable" class="hidden fixed">
+        <thead><tr><th class="chk"><input type="checkbox" id="regAll" checked></th><th style="width:170px">Category</th><th>Entry</th><th style="width:220px">Problem</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="empty hidden" id="regEmpty">No registry issues found. 🎉</div>
+      <div class="panel hidden" id="regBackupPanel"></div>
+    </section>
+
+    <!-- Startup -->
+    <section id="view-startup" class="view">
+      <header><h1>Startup Manager</h1><p>Disable programs you don't need at boot to make Windows start faster.</p></header>
+      <div class="toolbar">
+        <button class="btn primary" id="stRefresh">Refresh</button>
+        <span class="summary" id="stSummary"></span>
+      </div>
+      <div class="table-wrap"><table id="stTable" class="fixed">
+        <thead><tr><th style="width:30%">Program</th><th>Command</th><th style="width:150px">Scope</th><th style="width:80px">Enabled</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+
+    <!-- Programs -->
+    <section id="view-programs" class="view">
+      <header><h1>Uninstaller</h1><p>Remove software you no longer use.</p></header>
+      <div class="toolbar">
+        <input type="search" id="pgSearch" placeholder="Search programs…">
+        <select id="pgSort">
+          <option value="name">Sort by name</option>
+          <option value="size">Sort by size</option>
+          <option value="date">Sort by install date</option>
+        </select>
+        <button class="btn ghost" id="pgRefresh">Refresh</button>
+        <span class="summary" id="pgSummary"></span>
+      </div>
+      <div class="table-wrap"><table id="pgTable">
+        <thead><tr><th>Name</th><th>Publisher</th><th>Version</th><th>Size</th><th>Installed</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+
+    <!-- Disk -->
+    <section id="view-disk" class="view">
+      <header><h1>Large Files</h1><p>Find the biggest files hogging your disk.</p></header>
+      <div class="toolbar">
+        <input type="text" id="dkRoot" readonly>
+        <button class="btn ghost" id="dkPick">Choose…</button>
+        <label class="inline">Min size
+          <select id="dkMin"><option>50</option><option>100</option><option selected>250</option><option>500</option><option>1000</option></select> MB
+        </label>
+        <button class="btn primary" id="dkScan">Find</button>
+        <span class="summary" id="dkSummary"></span>
+      </div>
+      <div class="progress hidden" id="dkProgress"><div class="bar indeterminate"></div><span></span></div>
+      <div class="table-wrap"><table id="dkTable" class="fixed">
+        <thead><tr><th>File</th><th style="width:100px">Size</th><th style="width:110px">Modified</th><th style="width:160px"></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+
+    <!-- System -->
+    <section id="view-system" class="view">
+      <header><h1>System Info</h1><p>Overview of your hardware and Windows installation.</p></header>
+      <div class="sys-grid" id="sysGrid"><div class="muted">Loading…</div></div>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-box">
+      <h3 id="modalTitle"></h3>
+      <p id="modalBody"></p>
+      <div class="row end">
+        <button class="btn ghost" id="modalCancel">Cancel</button>
+        <button class="btn primary" id="modalOk">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name": "pc-sweep",
+  "productName": "PC Sweep",
+  "version": "1.0.0",
+  "description": "A PC cleaning and optimization utility for Windows",
+  "main": "main.js",
+  "author": "rebucasrandy1986",
+  "license": "MIT",
+  "scripts": {
+    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.pcsweep.app",
+    "productName": "PC Sweep",
+    "files": ["main.js", "preload.js", "src/**/*", "renderer/**/*"],
+    "win": {
+      "target": "nsis",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
