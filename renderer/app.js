@@ -50,6 +50,73 @@ function setProgress(el, pct, text) {
   $('span', el).textContent = text;
 }
 
+// ---------------- blaze effects ----------------
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function flare() {
+  if (reducedMotion) return;
+  const el = document.createElement('div');
+  el.className = 'flare';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+  embers.burst(70);
+}
+
+// Gold embers drifting up from the bottom of the window.
+const embers = (() => {
+  const canvas = $('#embers');
+  const ctx = canvas.getContext('2d');
+  const sparks = [];
+  let w = 0, h = 0;
+  const resize = () => {
+    const dpr = window.devicePixelRatio || 1;
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  const spawn = (fast = false) => ({
+    x: Math.random() * w,
+    y: fast ? h * (0.4 + Math.random() * 0.3) : h + Math.random() * 40,
+    r: 0.6 + Math.random() * 1.8,
+    vy: fast ? -(1.5 + Math.random() * 3) : -(0.25 + Math.random() * 0.7),
+    vx: (Math.random() - 0.5) * (fast ? 2.5 : 0.3),
+    life: 1,
+    decay: fast ? 0.008 + Math.random() * 0.01 : 0.0015 + Math.random() * 0.002,
+    phase: Math.random() * Math.PI * 2,
+  });
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.phase += 0.03;
+      s.x += s.vx + Math.sin(s.phase) * 0.3;
+      s.y += s.vy;
+      s.life -= s.decay;
+      if (s.life <= 0 || s.y < -10) { sparks.splice(i, 1); continue; }
+      const a = s.life * (0.55 + 0.45 * Math.sin(s.phase * 3));
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+      g.addColorStop(0, `rgba(255, 236, 180, ${a})`);
+      g.addColorStop(0.35, `rgba(240, 180, 80, ${a * 0.6})`);
+      g.addColorStop(1, 'rgba(255, 120, 40, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    while (sparks.length < 45) sparks.push(spawn());
+    if (!document.hidden) requestAnimationFrame(frame);
+  }
+  if (!reducedMotion) {
+    resize();
+    window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) requestAnimationFrame(frame); });
+    for (let i = 0; i < 45; i++) { const s = spawn(); s.y = Math.random() * h; sparks.push(s); }
+    requestAnimationFrame(frame);
+  }
+  return { burst: (n) => { for (let i = 0; i < n; i++) sparks.push(spawn(true)); } };
+})();
+
 // ---------------- navigation ----------------
 const loaders = {};
 function show(view) {
@@ -123,6 +190,7 @@ async function cleanGroup(group, ids, ask = true) {
   activeProgress = prog;
   try {
     const r = await call(window.api.junk.clean(ids));
+    flare();
     toast(`Cleaned ${fmtBytes(r.freed)} (${fmtNum(r.deleted)} items).${r.failed ? ` ${fmtNum(r.failed)} in use or protected were skipped.` : ''}`);
     await scanGroup(group);
     return r;
@@ -178,6 +246,7 @@ async function fixRegistry(ids, ask = true) {
   if (ask && !(await confirmDialog('Fix registry issues?', `${ids.length} entries will be removed.\nA backup is created first and can be restored from "Backups…".`, 'Fix'))) return null;
   try {
     const r = await call(window.api.registry.fix(ids));
+    flare();
     toast(`Fixed ${r.fixed} issue(s).${r.failed ? ` ${r.failed} failed.` : ''} Backup saved.`);
     await scanRegistry();
     return r;
@@ -341,7 +410,7 @@ loaders.system = async () => {
 function setScore(score) {
   const arc = $('#gaugeArc');
   arc.style.strokeDashoffset = `${326.7 * (1 - score / 100)}px`;
-  arc.style.stroke = score >= 85 ? 'var(--success)' : score >= 60 ? 'var(--warn)' : 'var(--danger)';
+  arc.classList.toggle('poor', score < 60);
   $('#score').textContent = score;
   $('#scoreText').textContent = score >= 85 ? 'Excellent' : score >= 60 ? 'Needs attention' : 'Poor';
 }

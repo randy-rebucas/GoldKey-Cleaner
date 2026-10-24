@@ -17,8 +17,9 @@ function createWindow() {
     height: 760,
     minWidth: 960,
     minHeight: 620,
-    backgroundColor: '#0f1724',
-    title: 'PC Sweep',
+    backgroundColor: '#0c0a07',
+    title: 'GoldKey Cleaner',
+    icon: path.join(__dirname, 'renderer', 'logo.png'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

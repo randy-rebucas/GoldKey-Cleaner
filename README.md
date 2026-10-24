@@ -1,4 +1,4 @@
-# PC Sweep
+# GoldKey Cleaner
 
 A Windows PC cleaning and optimization utility in the style of PC Cleaner, built with Electron.
 

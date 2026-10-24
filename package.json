@@ -1,6 +1,6 @@
 {
-  "name": "pc-sweep",
-  "productName": "PC Sweep",
+  "name": "goldkey-cleaner",
+  "productName": "GoldKey Cleaner",
   "version": "1.0.0",
   "description": "A PC cleaning and optimization utility for Windows",
   "main": "main.js",
@@ -15,9 +15,10 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.pcsweep.app",
-    "productName": "PC Sweep",
+    "appId": "com.goldkey.cleaner",
+    "productName": "GoldKey Cleaner",
     "files": ["main.js", "preload.js", "src/**/*", "renderer/**/*"],
+    "icon": "build/icon.png",
     "win": {
       "target": "nsis",
       "requestedExecutionLevel": "asInvoker"
