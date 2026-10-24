@@ -45,8 +45,21 @@ body {
   padding: 18px 12px;
 }
 .brand { display: flex; align-items: center; gap: 11px; font-size: 18px; font-weight: 700; padding: 4px 8px 22px; }
-.brand img { width: 34px; height: 34px; border-radius: 9px; animation: logoGlow 3.2s ease-in-out infinite; }
-.brand span { background: var(--blaze-text); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sheen 5s linear infinite; }
+.brand .logo { position: relative; flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; overflow: hidden; animation: logoGlow 3.2s ease-in-out infinite; }
+.brand .logo img { display: block; width: 100%; height: 100%; }
+/* the sweeping blaze of light across the logo */
+.brand .logo::after {
+  content: "";
+  position: absolute;
+  top: -20%; bottom: -20%; left: -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .8), transparent);
+  transform: skewX(-20deg);
+  animation: blaze 3.4s ease-in-out infinite;
+  animation-delay: .6s;
+  pointer-events: none;
+}
+.brand > span:last-child { background: var(--blaze-text); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sheen 5s linear infinite; }
 @keyframes logoGlow {
   0%, 100% { box-shadow: 0 0 6px rgba(240, 195, 94, .25); }
   50% { box-shadow: 0 0 18px rgba(240, 195, 94, .6), 0 0 34px rgba(255, 138, 61, .2); }
